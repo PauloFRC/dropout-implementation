@@ -4,15 +4,19 @@ from implementation.dropout import Dropout
 from nn_models.base import BaseDropoutModel
 
 class SimpleDropoutNetwork(BaseDropoutModel):
-    def __init__(self, dropout_rate=0.4, dropout_mode="inverted"):
+    def __init__(self, dropout_rate=0.4, dropout_mode="inverted", input_channels=1, img_size=28):
         super().__init__(
             name="Simple Dropout Neural Network",
             dropout_rate=dropout_rate,
-            dropout_mode=dropout_mode
+            dropout_mode=dropout_mode,
+            input_channels=input_channels,
+            img_size=img_size
         )
+
+        self.flatten_dim = input_channels * img_size * img_size
         
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(28 * 28, 512)
+        self.fc1 = nn.Linear(self.flatten_dim, 512)
         self.relu = nn.ReLU()
         self.dropout1 = Dropout(p=self.dropout_rate, mode=self.dropout_mode)
         self.fc2 = nn.Linear(512, 256)

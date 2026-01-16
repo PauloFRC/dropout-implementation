@@ -19,7 +19,7 @@ def train_and_validate(model, train_loader, test_loader, epochs=50, max_norm=3.0
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     
-    history = {'loss': [], 'acc': [], 'f1': []}
+    history = {'train_loss': [], 'test_loss': [], 'acc': [], 'f1': []}
     
     start_time = time.time()
     
@@ -33,18 +33,22 @@ def train_and_validate(model, train_loader, test_loader, epochs=50, max_norm=3.0
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-            if max_norm != None:
+            # use max-norm only along dropout
+            if max_norm != None and model.dropout_rate > 0: 
                 enforce_max_norm(model, max_val=max_norm)
             running_loss += loss.item()
             
         model.eval()
         correct = 0
         total = 0
+        test_loss = 0.0
         all_preds = []
         all_labels = []
         with torch.no_grad():
             for inputs, labels in test_loader:
                 outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                test_loss += loss.item()
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
@@ -56,10 +60,12 @@ def train_and_validate(model, train_loader, test_loader, epochs=50, max_norm=3.0
         all_labels = torch.cat(all_labels).numpy()
         
         acc = 100 * correct / total
-        avg_loss = running_loss / len(train_loader)
+        avg_train_loss = running_loss / len(train_loader)
+        avg_test_loss = test_loss / len(test_loader)
         f1 = f1_score(all_labels, all_preds, average="macro")
         
-        history['loss'].append(avg_loss)
+        history['train_loss'].append(avg_train_loss)
+        history['test_loss'].append(avg_test_loss)
         history['acc'].append(acc)
         history['f1'].append(f1)
         
