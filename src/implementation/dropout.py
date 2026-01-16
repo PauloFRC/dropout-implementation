@@ -28,5 +28,4 @@ class Dropout(torch.nn.Module):
             else:
                 # standard dropout scaling. Scale at inference
                 return x * (1.0 - self.p)
-
     
